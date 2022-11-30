@@ -1,7 +1,10 @@
+/*
+read.h - read.cpp header
+*/
 
 #ifndef READ_H
 #define READ_H
 
-void initRead();
+int initRead();
 
 #endif

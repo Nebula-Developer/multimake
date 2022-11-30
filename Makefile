@@ -1,6 +1,6 @@
 BUILD = src/main.cpp src/read.cpp
 TARGET = build/mm
-CFLAGS = -std=c++11 -Wall -Wextra -Werror -pedantic -O3
+CFLAGS = -std=c++17 -Wall -Wextra -Werror -pedantic -O3
 CC = g++
 
 .PHONY: all test clean
@@ -11,7 +11,7 @@ all: $(BUILD)
 
 test:
 	make all
-	./$(TARGET)
+	./$(TARGET) test -d
 
 clean:
 	rm -rf build

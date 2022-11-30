@@ -6,21 +6,40 @@ error.h - Primary multimake error handling
 #define ERROR_H
 
 #include "color.h"
+#include "args.h"
+
 #include <iostream>
 
-void error(std::string err, bool exits = true) {
+inline void error(std::string err, bool exits = true) {
     std::cout << BOLDRED << "multimake: error: " << RESET << err << std::endl;
     if (exits) exit(1);
     return;
 }
 
-void warning(std::string warn) {
+inline void warning(std::string warn) {
     std::cout << BOLDYELLOW << "multimake: warning: " << RESET << warn << std::endl;
     return;
 }
 
-void info(std::string info) {
+inline void info(std::string info) {
     std::cout << GREY << "multimake: info: " << RESET << info << std::endl;
+    return;
+}
+
+inline bool should_debug = false;
+
+inline void check_debug() {
+    for (int i = 0; i < argc; i++) {
+        if (std::string(argv[i]) == "-d" || std::string(argv[i]) == "--debug") {
+            should_debug = true;
+            return;
+        }
+    }
+}
+
+inline void debug(std::string debug) {
+    if (should_debug)
+        std::cout << BOLDGREY << "multimake: debug: " << RESET << debug << std::endl;
     return;
 }
 

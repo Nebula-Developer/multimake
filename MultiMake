@@ -1,1 +1,9 @@
-test
+var test = 5
+
+testing test@(test)se
+
+target test(test) {
+    echo "Hello, world!";
+}
+
+echo "test";
