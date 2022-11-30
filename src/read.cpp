@@ -12,9 +12,9 @@ read.cpp - Read MultiMake files and run (final use)
 #include <vector>
 #include <algorithm>
 #include <iterator>
-#include <sstream>
 #include <regex>
 #include <numeric>
+#include <sstream>
 
 int initRead() {
     std::ifstream file("MultiMake");
@@ -30,6 +30,7 @@ int initRead() {
     std::vector<std::string> commands;
     std::vector<std::string> targets;
     std::vector<std::string> dependencies;
+    std::vector<std::tuple<std::string, std::string>> variables;
 
     while (std::getline(file, line)) {
         lines.push_back(line);
@@ -43,39 +44,44 @@ int initRead() {
         // @(<name>)
         // So we need to check for those.
 
-        std::string reg = "var\\s+([a-zA-Z0-9]+)\\s*=\\s*(.*)";
+        std::string reg = "var\\s+([a-zA-Z0-9]+)\\s=\\s*(.*)";
         std::regex var(reg);
         std::smatch match;
 
         if (std::regex_search(lines[i], match, var)) {
             std::string name = match[1];
             std::string value = match[2];
-
-            // TODO: Improve stability and efficiency
-
-            // Now we need to replace all instances of @(<name>) with <value>
-            for (int j = 0; j < (int)lines.size(); j++) {
-                std::string reg = "@\\(" + name + "\\)";
-                std::regex var(reg);
-                std::string value = match[2];
-                lines[j] = std::regex_replace(lines[j], var, value);
-            }
-
-            debug("Found variable " + name + " with value " + value);
+            variables.push_back(std::make_tuple(name, value));
         }
     }
 
-    // Join all content into single string for regex
-    std::string content = std::accumulate(lines.begin(), lines.end(), std::string()); // #include <numeric>
+    // Join all content into single string where each line is separated by a newline
+    std::string content;
+    for (int i = 0; i < (int)lines.size(); i++) {
+        content += lines[i] + "\n";
+    }
 
     // Targets are defined as:
-    // <target>(<dependencies>) { <commands> }
+    // target <target>(<dependencies>) { \n<commands>\n }
     // So we need to check for those.
 
-    std::string reg = "target\\s+(\\w+)\\((\\w+)\\)\\s*\\{\\s*(.*)\\s*\\}";
+    // A cool regex to get everything (newlines, spaces, just absolutely everything) is: "\\s*([^\\s]+)\\s*"
+
+    std::string reg = "target\\s+([a-zA-Z0-9]+)\\((.*)\\)\\s*\\{\\s*([^\\}]*)\\s*\\}";
     std::regex target(reg);
     std::smatch match;
 
+    // Replace all variables with their values
+    for (int i = 0; i < (int)variables.size(); i++) {
+        std::string name = std::get<0>(variables[i]);
+        std::string value = std::get<1>(variables[i]);
+        std::string reg = "@\\(" + name + "\\)";
+        std::regex var(reg);
+        content = std::regex_replace(content, var, value);
+    }
+
+    debug("Content: " + content);
+    
     while (std::regex_search(content, match, target)) {
         std::string target = match[1];
         std::string dependency = match[2];
@@ -90,15 +96,43 @@ int initRead() {
         content = match.suffix().str();
     }
 
+    bool didFindArgumentTarget = false;
     
     // Parse cl args
-    for (int i = 0; i < argc; i++) {
+    for (int i = 1; i < argc; i++) {
         // If its the name of a target, run the commands
         if (std::find(targets.begin(), targets.end(), argv[i]) != targets.end()) {
+            didFindArgumentTarget = true;
             debug("Found target " + std::string(argv[i]) + " in arguments");
-            int index = std::distance(targets.begin(), std::find(targets.begin(), targets.end(), argv[i]));
-            debug("Running command " + commands[index]);
-            system(commands[index].c_str());
+            
+            // Run each line of the command
+            std::string command = commands[std::distance(targets.begin(), std::find(targets.begin(), targets.end(), argv[i]))];
+            std::stringstream ss(command);
+            std::string line;
+            while (std::getline(ss, line, '\n')) {
+                debug("Running command: " + line);
+                system(line.c_str());
+            }
+        } else {
+            error("Could not find target " + std::string(argv[i]) + " in MultiMake file");
+        }
+    }
+
+    if (!didFindArgumentTarget) {
+        // Run first target
+        debug("Running first target");
+
+        if (commands.size() > 0) {
+            // Run each line of the command
+            std::stringstream ss(commands[0]);
+            std::string to;
+
+            while (std::getline(ss, to, '\n')) {
+                debug("Running command: " + to);
+                system(to.c_str());
+            }
+        } else {
+            error("No targets found in MultiMake file");
         }
     }
 

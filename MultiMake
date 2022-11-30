@@ -1,9 +1,25 @@
-var test = 5
+# Rewrite of the makefile, but in multimake.
 
-testing test@(test)se
+var target = build/mm
+var build = src/main.cpp src/read.cpp
+var cflags = -std=c++17 -Wall -Wextra -Werror -pedantic -O3
+var cc = g++
 
-target test(test) {
-    echo "Hello, world!";
+target build(@(build)) {
+    mkdir -p build
+	@(cc) @(cflags) @(build) -o @(target)
+}
+	
+
+target test() {
+	./build/mm build
+	./@(target) afterTest
 }
 
-echo "test";
+target afterTest() {
+    echo "We just built ourself!"
+}
+
+target clean() {
+	rm -rf build
+}

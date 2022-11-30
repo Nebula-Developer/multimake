@@ -11,7 +11,7 @@ all: $(BUILD)
 
 test:
 	make all
-	./$(TARGET) test -d
+	./$(TARGET) test
 
 clean:
 	rm -rf build

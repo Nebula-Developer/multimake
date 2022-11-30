@@ -32,6 +32,11 @@ inline void check_debug() {
     for (int i = 0; i < argc; i++) {
         if (std::string(argv[i]) == "-d" || std::string(argv[i]) == "--debug") {
             should_debug = true;
+            // Remove from args
+            for (int j = i; j < argc; j++) {
+                argv[j] = argv[j + 1];
+            }
+            argc--;
             return;
         }
     }
