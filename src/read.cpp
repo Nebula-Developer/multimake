@@ -3,6 +3,7 @@ read.cpp - Read MultiMake files and run (final use)
 */
 
 #include "read.h"
+#include "error.h"
 
 #include <iostream>
 #include <fstream>
@@ -17,7 +18,7 @@ void initRead() {
     std::ifstream file("MultiMake");
 
     if (!file) {
-        std::cout << "multimake: error: no MultiMake file found" << std::endl;
+        error("Could not locate or open MultiMake file in current directory");
         return;
     }
 
