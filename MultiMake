@@ -1,12 +1,13 @@
 # Rewrite of the makefile, but in multimake.
 
+var build = src/main.cpp src/read.cpp src/maths.cpp src/exec.cpp
 var target = build/mm
-var build = src/main.cpp src/read.cpp
 var cflags = -std=c++17 -Wall -Wextra -Werror -pedantic -O3
 var cc = g++
 
 target build(@(build)) {
     mkdir -p build
+	echo @(cc) @(cflags) @(build) -o @(target)
 	@(cc) @(cflags) @(build) -o @(target)
 }
 
@@ -16,7 +17,7 @@ target test() {
 }
 
 target afterTest() {
-    echo "We just built ourself!"
+    echo "After test target (call from sh function)"
 }
 
 target clean() {
